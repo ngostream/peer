@@ -1,4 +1,4 @@
-# PEER // Visual Accountability
+# Peer - Visual Accountability
 
 A real-time focus monitoring system that tracks your posture and attention during work sessions.
 
