@@ -133,7 +133,7 @@ class VideoCamera:
                     # draw red box immediately on phone
                     cv2.rectangle(frame, (bbox.origin_x, bbox.origin_y), 
                                  (bbox.origin_x + bbox.width, bbox.origin_y + bbox.height), (0, 0, 255), 4)
-                    cv2.putText(frame, f"NO PHONES ({score:.2f})", (bbox.origin_x, bbox.origin_y - 10),
+                    cv2.putText(frame, f"PHONE ({score:.2f})", (bbox.origin_x, bbox.origin_y - 10),
                                cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 2)
                                
                 # whitelist: books, laptops, tablets (iPads usually detected as "laptop")
