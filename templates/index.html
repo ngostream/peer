@@ -243,7 +243,7 @@
     </div>
 
     <script>
-        // THEME
+        // theme
         function toggleTheme() {
             const html = document.documentElement;
             if (html.classList.contains('dark')) {
@@ -310,7 +310,7 @@
                 await fetch('/calibrate', { method: 'POST' });
                 showToast("Posture set successfully", "good");
                 
-                // remove pulse after animation
+                // remove pulse after animation completes
                 setTimeout(() => {
                     camContainer.classList.remove('animate-pulse');
                 }, 1000);
@@ -336,7 +336,7 @@
                 btn.innerText = "Start Session";
                 btn.className = "btn-glass flex-none py-3.5 rounded-xl font-semibold text-base w-full shadow-lg bg-emerald-500 dark:bg-emerald-600 text-white border-emerald-600 dark:border-emerald-500 hover:bg-emerald-600 dark:hover:bg-emerald-500 transition-all";
                 clearInterval(statsInterval);
-                // refresh history immediately after session ends
+                // refresh history after session ends
                 setTimeout(() => loadHistory(), 200);
             }
         }
@@ -374,7 +374,7 @@
                     unit.className = "text-2xl mt-4 transition-colors text-emerald-600 dark:text-emerald-500";
                 }
                 
-                // refresh history when status changes
+                // refresh history on status change
                 loadHistory();
             }, 500);
         }
@@ -608,7 +608,7 @@
                 eventsContainer.classList.add('hidden');
                 expandedSessionId = null;
                 
-                // restore original sizes
+                // restore original panel sizes
                 historyPanel.classList.remove('flex-[0.85]');
                 historyPanel.classList.add('flex-[0.4]');
                 peersPanel.classList.remove('flex-[0.15]');
