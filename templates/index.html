@@ -39,6 +39,38 @@
 
     <div id="toast-container" class="absolute top-24 right-6 z-50 flex flex-col gap-2 pointer-events-none"></div>
 
+    <!-- Invite Peer Modal -->
+    <div id="invite-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden items-center justify-center">
+        <div class="bg-white dark:bg-neutral-900 rounded-2xl p-6 max-w-md w-full mx-4 border border-neutral-200/50 dark:border-neutral-800/50 shadow-2xl">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold text-neutral-900 dark:text-white">Invite Peer</h3>
+                <button onclick="closeInviteModal()" class="text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">Email Address</label>
+                    <input type="email" placeholder="peer@example.com" class="w-full px-4 py-2.5 rounded-xl border border-neutral-200/50 dark:border-neutral-800/50 bg-neutral-50 dark:bg-neutral-800/50 text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">Message (Optional)</label>
+                    <textarea placeholder="Join me for a focused session!" rows="3" class="w-full px-4 py-2.5 rounded-xl border border-neutral-200/50 dark:border-neutral-800/50 bg-neutral-50 dark:bg-neutral-800/50 text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all resize-none"></textarea>
+                </div>
+                <div class="flex gap-3 pt-2">
+                    <button onclick="closeInviteModal()" class="flex-1 px-4 py-2.5 rounded-xl text-sm font-medium bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-all">
+                        Cancel
+                    </button>
+                    <button onclick="sendInvite()" class="flex-1 px-4 py-2.5 rounded-xl text-sm font-medium bg-emerald-500 dark:bg-emerald-600 text-white hover:bg-emerald-600 dark:hover:bg-emerald-500 transition-all shadow-lg">
+                        Send Invite
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <nav class="flex-none flex justify-between items-center mb-6 bg-white/60 dark:bg-neutral-900/60 p-4 rounded-2xl border border-neutral-200/50 dark:border-neutral-800/50 backdrop-blur-sm glow transition-colors">
         <div class="flex items-center gap-4">
             <div class="relative w-10 h-10 flex items-center justify-center bg-neutral-100 dark:bg-neutral-800 rounded-xl border border-neutral-200 dark:border-neutral-700">
@@ -137,7 +169,7 @@
 
                 <div id="friend-list" class="space-y-2.5 overflow-y-auto pr-2"></div>
 
-                <button class="btn-glass flex-none mt-4 w-full py-2.5 rounded-xl text-sm font-medium bg-neutral-50 dark:bg-neutral-800/50 text-neutral-700 dark:text-neutral-300 border-neutral-200/50 dark:border-neutral-700/50 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-all">
+                <button onclick="showInviteModal()" class="btn-glass flex-none mt-4 w-full py-2.5 rounded-xl text-sm font-medium bg-neutral-50 dark:bg-neutral-800/50 text-neutral-700 dark:text-neutral-300 border-neutral-200/50 dark:border-neutral-700/50 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-all">
                     + Invite Peer
                 </button>
             </div>
@@ -510,6 +542,23 @@
             
             container.appendChild(toast);
             setTimeout(() => toast.remove(), 3000);
+        }
+
+        function showInviteModal() {
+            const modal = document.getElementById('invite-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeInviteModal() {
+            const modal = document.getElementById('invite-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function sendInvite() {
+            closeInviteModal();
+            showToast("Invite sent successfully!", "good");
         }
     </script>
 </body>
