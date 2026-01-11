@@ -303,10 +303,21 @@
 
         async function calibrate() {
             try {
+                const camContainer = document.getElementById('cam-container');
+                // add pulse animation
+                camContainer.classList.add('animate-pulse');
+                
                 await fetch('/calibrate', { method: 'POST' });
                 showToast("Posture set successfully", "good");
+                
+                // remove pulse after animation
+                setTimeout(() => {
+                    camContainer.classList.remove('animate-pulse');
+                }, 1000);
             } catch (e) {
                 showToast("Calibration failed", "bad");
+                const camContainer = document.getElementById('cam-container');
+                camContainer.classList.remove('animate-pulse');
             }
         }
 

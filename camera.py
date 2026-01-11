@@ -36,6 +36,7 @@ class VideoCamera:
         # user can override this by clicking calibrate in the ui
         self.baseline_dist = 0.22
         self.is_calibrating = False
+        self.calibration_frames = 0  # track frames to show visual feedback
         
         # session history tracking
         self.history = []
@@ -180,7 +181,24 @@ class VideoCamera:
                 current_dist = shoulder_y - nose.y
                 self.baseline_dist = current_dist - 0.05
                 self.is_calibrating = False
+                self.calibration_frames = 30  # show green line for ~1 second at 30fps
                 print(f"calibrated: new threshold offset is {self.baseline_dist}")
+            
+            # show calibration feedback
+            if self.calibration_frames > 0:
+                # draw pulsing green line at calibrated threshold
+                calibrated_threshold_y = shoulder_y - self.baseline_dist
+                line_y_px = int(calibrated_threshold_y * h)
+                
+                # pulse effect using frame counter
+                pulse_intensity = abs((self.calibration_frames % 20) - 10) / 10
+                thickness = int(2 + pulse_intensity * 2)
+                
+                cv2.line(frame, (0, line_y_px), (w, line_y_px), (0, 255, 0), thickness)
+                cv2.putText(frame, "CALIBRATED", (w // 2 - 80, line_y_px - 15), 
+                           cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
+                
+                self.calibration_frames -= 1
             
             # logic: "high water mark"
             # we subtract the baseline (either default 0.20 or calibrated) from shoulder height
