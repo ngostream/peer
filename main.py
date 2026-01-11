@@ -4,7 +4,7 @@ from fastapi.templating import Jinja2Templates
 from camera import VideoCamera
 import time
 
-app = FastAPI(title="PEER // Visual Accountability")
+app = FastAPI(title="Peer - Visual Accountability")
 templates = Jinja2Templates(directory="templates")
 
 camera = VideoCamera()
