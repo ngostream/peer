@@ -37,6 +37,7 @@ class VideoCamera:
                 urllib.request.urlretrieve(url, path)
             return path
 
+        # pose model for head tilt/slouch
         # using the 'full' model for better accuracy on shoulder tracking
         pose_path = download(
             "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_full/float16/1/pose_landmarker_full.task",
@@ -46,6 +47,19 @@ class VideoCamera:
             vision.PoseLandmarkerOptions(
                 base_options=python.BaseOptions(model_asset_path=pose_path),
                 running_mode=vision.RunningMode.IMAGE
+            )
+        )
+
+        # object moddel for phones
+        det_path = download(
+            "https://storage.googleapis.com/mediapipe-models/object_detector/efficientdet_lite0/float32/1/efficientdet_lite0.tflite",
+            "efficientdet_lite0.tflite"
+        )
+        self.detector = vision.ObjectDetector.create_from_options(
+            vision.ObjectDetectorOptions(
+                base_options=python.BaseOptions(model_asset_path=det_path),
+                score_threshold=0.4, # 40% confidence required to trigger
+                category_allowlist=["cell phone", "mobile phone"] # ignore cups, laptops, etc.
             )
         )
 
@@ -61,10 +75,29 @@ class VideoCamera:
 
         pose_result = self.pose_landmarker.detect(mp_image)
 
+        det_result = self.detector.detect(mp_image)
+
         is_distracted = False
         reason = ""
 
-        if pose_result.pose_landmarks:
+        # phone detection (priority #1)
+        if det_result.detections:
+            for detection in det_result.detections:
+                is_distracted = True
+                reason = "PHONE"
+                
+                # draw red box around the phone
+                bbox = detection.bounding_box
+                start_point = (bbox.origin_x, bbox.origin_y)
+                end_point = (bbox.origin_x + bbox.width, bbox.origin_y + bbox.height)
+                cv2.rectangle(frame, start_point, end_point, (0, 0, 255), 4)
+                
+                # label
+                cv2.putText(frame, "NO PHONES", (bbox.origin_x, bbox.origin_y - 10),
+                           cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 2)
+
+        # posture detection (priority #2)
+        if not is_distracted and pose_result.pose_landmarks:
             landmarks = pose_result.pose_landmarks[0]
             
             # extract normalized coordinates (0.0 is top, 1.0 is bottom)
@@ -99,7 +132,8 @@ class VideoCamera:
         if is_distracted:
             self.distracted_frames += 1
         else:
-            self.distracted_frames = max(0, self.distracted_frames - 1)
+            # reset the counter to zero immediately when distraction is gone
+            self.distracted_frames = 0
 
         # hysteresis buffer to prevent flickering
         if self.distracted_frames > self.DISTRACTION_THRESHOLD:
