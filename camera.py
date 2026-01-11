@@ -85,8 +85,8 @@ class VideoCamera:
 
         # object model for phones and study material
         det_path = download(
-            "https://storage.googleapis.com/mediapipe-models/object_detector/efficientdet_lite0/float32/1/efficientdet_lite0.tflite",
-            "efficientdet_lite0.tflite"
+            "https://storage.googleapis.com/mediapipe-models/object_detector/efficientdet_lite2/float32/1/efficientdet_lite2.tflite",
+            "efficientdet_lite2.tflite"
         )
         self.detector = vision.ObjectDetector.create_from_options(
             vision.ObjectDetectorOptions(
@@ -136,8 +136,8 @@ class VideoCamera:
                     cv2.putText(frame, f"PHONE ({score:.2f})", (bbox.origin_x, bbox.origin_y - 10),
                                cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 2)
                                
-                # whitelist: books, laptops, tablets (iPads usually detected as "laptop")
-                elif category in ["book", "laptop"]:
+                # whitelist: books, laptops, tablets
+                elif category in ["book", "laptop", "tablet"]:
                     has_study_material = True
                     study_box = bbox
 
