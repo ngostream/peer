@@ -1,5 +1,5 @@
 from fastapi import FastAPI, Request, Depends, HTTPException
-from fastapi.responses import StreamingResponse, HTMLResponse, RedirectResponse
+from fastapi.responses import StreamingResponse, HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from camera import VideoCamera
 import time
@@ -73,6 +73,12 @@ async def start(user: dict = Depends(require_auth)):
 async def stop(user: dict = Depends(require_auth)):
     return {"status": "stopped"}
 
+@app.post("/calibrate")
+async def calibrate_camera(user: dict = Depends(require_auth)):
+    # triggers the calibration flag in the camera instance
+    camera.calibrate()
+    return JSONResponse(content={"status": "calibrated", "message": "posture baseline updated"})
+
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
@@ -80,4 +86,3 @@ async def index(request: Request):
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
-    

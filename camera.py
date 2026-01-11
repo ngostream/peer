@@ -5,15 +5,19 @@ from mediapipe.tasks.python import vision
 import numpy as np
 import os
 import urllib.request
+import time
 
 class VideoCamera:
     def __init__(self):
         # setup camera
         # we force 1080p to capture peripheral vision
         # this helps catch phones held lower in the frame than standard webcams show
-        self.camera = cv2.VideoCapture(0)
+        # use AVFoundation backend on macOS to avoid crashes
+        self.camera = cv2.VideoCapture(0, cv2.CAP_AVFOUNDATION)
         self.camera.set(cv2.CAP_PROP_FRAME_WIDTH, 1920) 
         self.camera.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
+        # reduce buffer size to avoid crashes on macOS
+        self.camera.set(cv2.CAP_PROP_BUFFERSIZE, 1)
         
         if not self.camera.isOpened():
             print("Camera failed to open.")
@@ -24,7 +28,17 @@ class VideoCamera:
         self.focus_score = 100
         self.distracted_frames = 0
         self.DISTRACTION_THRESHOLD = 15
-        self.frame_timestamp_ms = 0  # timestamp for video mode
+        self.start_time_ms = int(time.time() * 1000)  # start time in milliseconds
+        
+        # calibration state
+        # default fallback is 0.22, which is forgiving but effective
+        # user can override this by clicking calibrate in the ui
+        self.baseline_dist = 0.22
+        self.is_calibrating = False
+
+    def calibrate(self):
+        # trigger flag to capture posture on next frame
+        self.is_calibrating = True
 
     def _setup_models(self):
         # auto-download mediapipe models to local /models folder
@@ -75,9 +89,9 @@ class VideoCamera:
         mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=rgb_frame)
 
         # run ai inference
-        # video mode requires timestamp (increment by 33ms per frame for ~30fps)
-        pose_result = self.pose_landmarker.detect_for_video(mp_image, self.frame_timestamp_ms)
-        self.frame_timestamp_ms += 33  # increment timestamp for next frame
+        # video mode requires timestamp - use actual time relative to start
+        current_time_ms = int(time.time() * 1000) - self.start_time_ms
+        pose_result = self.pose_landmarker.detect_for_video(mp_image, current_time_ms)
         
         det_result = self.detector.detect(mp_image)
 
@@ -145,11 +159,20 @@ class VideoCamera:
             
             # calculate the average height of the user's shoulders
             shoulder_y = (left_shoulder.y + right_shoulder.y) / 2
+
+            # calibration check
+            # if user requested calibration, capture current posture as the new 100%
+            # we add a 0.05 buffer so they can move slightly without triggering
+            if self.is_calibrating:
+                current_dist = shoulder_y - nose.y
+                self.baseline_dist = current_dist - 0.05
+                self.is_calibrating = False
+                print(f"calibrated: new threshold offset is {self.baseline_dist}")
             
             # logic: "high water mark"
-            # we subtract 0.20 from the shoulder height to create a limit line near the chin.
-            # if the nose drops below this line (y value gets larger), it's a slouch.
-            threshold_val = shoulder_y - 0.20
+            # we subtract the baseline (either default 0.20 or calibrated) from shoulder height
+            # to create a limit line near the chin.
+            threshold_val = shoulder_y - self.baseline_dist
 
             if nose.y > threshold_val:
                 is_distracted = True
@@ -165,6 +188,11 @@ class VideoCamera:
                 
                 cv2.putText(frame, "EYES UP", (10, text_y), 
                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 1)
+            else:
+                 # visual debugging: draw the safe line (green)
+                 # this helps users calibrate manually if needed
+                 line_y_px = int(threshold_val * h)
+                 cv2.line(frame, (0, line_y_px), (w, line_y_px), (0, 255, 0), 1)
 
         # score update logic
         if is_distracted:
@@ -195,4 +223,3 @@ class VideoCamera:
 
     def release(self):
         self.camera.release()
-    

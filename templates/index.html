@@ -35,8 +35,6 @@
             70% { box-shadow: 0 0 0 6px rgba(220, 38, 38, 0); }
             100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); }
         }
-        .ring-pulse-emerald { animation: pulse-emerald 2s infinite; }
-        .ring-pulse-red { animation: pulse-red 2s infinite; }
     </style>
 </head>
 <body class="bg-neutral-50 text-neutral-900 dark:bg-neutral-950 dark:text-neutral-200 h-screen w-screen p-4 lg:p-6 overflow-hidden flex flex-col transition-colors duration-300">
@@ -104,10 +102,22 @@
         </div>
 
         <div class="lg:col-span-6 h-full">
-            <div id="cam-container" class="w-full h-full bg-neutral-100 dark:bg-black rounded-3xl overflow-hidden border border-neutral-200 dark:border-neutral-800 relative shadow-2xl transition-all">
-                <img id="video-feed" src="/video_feed" class="w-full h-full object-cover opacity-90">
-                <div class="absolute top-6 left-6 bg-white/80 dark:bg-black/60 px-3 py-1.5 rounded-full text-xs font-mono text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 flex items-center gap-2 backdrop-blur-md shadow-lg">
+            <div id="cam-container" class="w-full h-full bg-neutral-100 dark:bg-black rounded-3xl overflow-hidden border border-neutral-200 dark:border-neutral-800 relative shadow-2xl transition-all group">
+                
+                <img id="video-feed" src="/video_feed" class="w-full h-full object-cover opacity-90 transition-transform duration-700 scale-125">
+                
+                <div class="absolute top-6 left-6 bg-white/80 dark:bg-black/60 px-3 py-1.5 rounded-full text-xs font-mono text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 flex items-center gap-2 backdrop-blur-md shadow-lg z-10">
                     <div id="status-dot" class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div> LIVE FEED
+                </div>
+
+                <div class="absolute top-6 right-6 z-20">
+                    <button onclick="calibrate()" class="bg-white/80 dark:bg-black/60 p-2 rounded-full text-emerald-600 hover:bg-emerald-500 hover:text-white transition backdrop-blur-md border border-emerald-500/20 shadow-lg" title="Calibrate Posture">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                    </button>
+                </div>
+
+                <div class="absolute bottom-6 left-1/2 -translate-x-1/2 text-[10px] text-neutral-500 opacity-0 group-hover:opacity-100 transition">
+                    PERIPHERAL VISION ACTIVE // 1080p SENSOR
                 </div>
             </div>
         </div>
@@ -184,6 +194,16 @@
                 startFriendSimulation();
             }
         });
+
+        // calibration Logic
+        async function calibrate() {
+            try {
+                await fetch('/calibrate', { method: 'POST' });
+                showToast("POSTURE CALIBRATED", "good");
+            } catch (e) {
+                showToast("CALIBRATION FAILED", "bad");
+            }
+        }
 
         async function toggleSession() {
             const btn = document.getElementById('session-btn');
