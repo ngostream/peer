@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <title>PEER // Visual Accountability</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+        
+        /* Emerald Glows */
+        .dark .glow { box-shadow: 0 0 40px rgba(16, 185, 129, 0.1); } 
+        .dark .glow-red { box-shadow: 0 0 50px rgba(220, 38, 38, 0.3); }
+        .glow { box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05); }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #525252; border-radius: 10px; }
+
+        /* Animations */
+        @keyframes pulse-emerald {
+            0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+            70% { box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+        @keyframes pulse-red {
+            0% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.4); }
+            70% { box-shadow: 0 0 0 6px rgba(220, 38, 38, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); }
+        }
+        .ring-pulse-emerald { animation: pulse-emerald 2s infinite; }
+        .ring-pulse-red { animation: pulse-red 2s infinite; }
+    </style>
+</head>
+<body class="bg-neutral-50 text-neutral-900 dark:bg-neutral-950 dark:text-neutral-200 h-screen w-screen p-4 lg:p-6 overflow-hidden flex flex-col transition-colors duration-300">
+
+    <div id="toast-container" class="absolute top-24 right-6 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <nav class="flex-none flex justify-between items-center mb-6 bg-white/80 dark:bg-neutral-900/80 p-4 rounded-2xl border border-neutral-200 dark:border-neutral-800 backdrop-blur-xl glow transition-colors">
+        <div class="flex items-center gap-4">
+            <div class="relative w-10 h-10 flex items-center justify-center bg-neutral-100 dark:bg-neutral-800 rounded-xl border border-neutral-200 dark:border-neutral-700">
+                <div class="w-3 h-3 bg-emerald-500 rounded-full shadow-[0_0_10px_rgba(16,185,129,0.5)]"></div>
+                <div class="absolute w-6 h-6 border-2 border-emerald-500/20 rounded-full animate-pulse"></div>
+            </div>
+            <div>
+                <h1 class="text-3xl font-bold tracking-tighter text-neutral-900 dark:text-white leading-none">PEER</h1>
+                <p class="text-[0.65rem] text-emerald-600 dark:text-emerald-400 uppercase tracking-[0.3em] font-semibold">Visual Accountability</p>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-4">
+            <button onclick="toggleTheme()" class="p-2 rounded-lg bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors border border-neutral-200 dark:border-neutral-700">
+                <svg class="w-5 h-5 block dark:hidden text-neutral-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                <svg class="w-5 h-5 hidden dark:block text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+            </button>
+
+            <div id="auth-section">
+                <button id="login-btn" onclick="window.location.href='/auth/login'" class="bg-neutral-900 dark:bg-white text-white dark:text-black px-6 py-2 rounded-lg font-bold hover:opacity-90 transition text-sm shadow-lg">
+                    LOGIN WITH GOOGLE
+                </button>
+                
+                <div id="user-profile" class="hidden flex items-center gap-3 bg-neutral-100 dark:bg-neutral-800/50 pr-4 pl-2 py-1.5 rounded-full border border-neutral-200 dark:border-neutral-700">
+                    <div class="w-8 h-8 rounded-full bg-neutral-300 dark:bg-neutral-600 overflow-hidden flex items-center justify-center">
+                        <svg class="w-full h-full text-neutral-400 dark:text-neutral-400 translate-y-1" fill="currentColor" viewBox="0 0 24 24"><path d="M24 20.993V24H0v-2.996A14.977 14.977 0 0112.004 15c4.904 0 9.26 2.354 11.996 5.993zM16.002 8.999a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+                    </div>
+                    <div class="text-right">
+                        <div id="user-name" class="font-bold text-sm text-neutral-900 dark:text-white leading-none"></div>
+                        <div class="text-[10px] text-emerald-500 font-mono tracking-wider">ONLINE</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div id="dashboard" class="hidden flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <div class="lg:col-span-3 flex flex-col gap-6 h-full">
+            <div class="bg-white/50 dark:bg-neutral-900/50 border border-neutral-200 dark:border-neutral-800 p-8 rounded-3xl flex-1 flex flex-col justify-center items-center relative overflow-hidden transition-colors">
+                <h2 class="text-neutral-500 text-xs uppercase tracking-widest font-semibold mb-4">Focus Score</h2>
+                <div class="flex items-start gap-2">
+                    <span id="score" class="text-8xl font-bold text-neutral-900 dark:text-white tracking-tighter">100</span>
+                    <span id="score-unit" class="text-2xl text-emerald-600 dark:text-emerald-500 mt-4 transition-colors">%</span>
+                </div>
+                <div class="w-full h-1.5 bg-neutral-200 dark:bg-neutral-800 mt-8 rounded-full overflow-hidden">
+                    <div id="score-bar" class="h-full bg-emerald-500 w-full transition-all duration-500 shadow-[0_0_15px_rgba(16,185,129,0.5)]"></div>
+                </div>
+            </div>
+
+            <div id="status-card" class="bg-white/50 dark:bg-neutral-900/50 border border-neutral-200 dark:border-neutral-800 p-6 rounded-3xl border-l-4 border-emerald-500 transition-all flex-none">
+                <h2 class="text-neutral-500 text-xs uppercase tracking-widest font-semibold mb-2">Status</h2>
+                <div id="status-text" class="text-xl font-bold text-emerald-600 dark:text-emerald-400 font-mono">READY</div>
+            </div>
+            
+            <button id="session-btn" onclick="toggleSession()" class="flex-none bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-4 rounded-xl shadow-[0_4px_20px_rgba(16,185,129,0.3)] transition-all w-full tracking-widest border border-emerald-500/20">
+                START SESSION
+            </button>
+        </div>
+
+        <div class="lg:col-span-6 h-full">
+            <div id="cam-container" class="w-full h-full bg-neutral-100 dark:bg-black rounded-3xl overflow-hidden border border-neutral-200 dark:border-neutral-800 relative shadow-2xl transition-all">
+                <img id="video-feed" src="/video_feed" class="w-full h-full object-cover opacity-90">
+                <div class="absolute top-6 left-6 bg-white/80 dark:bg-black/60 px-3 py-1.5 rounded-full text-xs font-mono text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 flex items-center gap-2 backdrop-blur-md shadow-lg">
+                    <div id="status-dot" class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div> LIVE FEED
+                </div>
+            </div>
+        </div>
+
+        <div class="lg:col-span-3 flex flex-col gap-6 h-full min-h-0">
+            
+            <div class="bg-white/50 dark:bg-neutral-900/50 border border-neutral-200 dark:border-neutral-800 rounded-3xl p-6 flex flex-col transition-colors flex-[0.6] min-h-0 overflow-hidden">
+                <div class="flex-none flex justify-between items-center mb-4">
+                    <h2 class="text-neutral-500 text-xs uppercase tracking-widest font-semibold flex items-center gap-2">
+                        <span class="w-1.5 h-1.5 bg-emerald-500 rounded-full"></span> Active Peers
+                    </h2>
+                    <span class="text-[10px] bg-neutral-100 dark:bg-neutral-800 px-2 py-1 rounded text-neutral-500 dark:text-neutral-400 font-mono">4 ONLINE</span>
+                </div>
+
+                <div id="friend-list" class="space-y-3 overflow-y-auto pr-2"></div>
+
+                <button class="flex-none mt-4 w-full py-2 rounded-xl border border-neutral-200 dark:border-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-800 text-neutral-500 text-xs font-mono transition">
+                    + INVITE PEER
+                </button>
+            </div>
+
+            <div class="bg-white/50 dark:bg-neutral-900/50 border border-neutral-200 dark:border-neutral-800 rounded-3xl p-6 flex flex-col transition-colors flex-[0.4] min-h-0 overflow-hidden">
+                <div class="flex-none flex justify-between items-center mb-4">
+                    <h2 class="text-neutral-500 text-xs uppercase tracking-widest font-semibold flex items-center gap-2">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        Session History
+                    </h2>
+                </div>
+                <div class="flex-1 flex items-center justify-center">
+                    <div class="text-center text-[10px] text-neutral-400 py-4 italic">No recent sessions</div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // THEME
+        function toggleTheme() {
+            const html = document.documentElement;
+            if (html.classList.contains('dark')) {
+                html.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            } else {
+                html.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            }
+        }
+        if (localStorage.getItem('theme') === 'light') {
+            document.documentElement.classList.remove('dark');
+        } else {
+            document.documentElement.classList.add('dark');
+        }
+
+        let sessionActive = false;
+        let statsInterval = null;
+        let friendInterval = null;
+
+        const friends = [
+            { name: "Alex Y.", status: "FOCUSED", score: 98 },
+            { name: "Ben C.", status: "FOCUSED", score: 94 },
+            { name: "Zimin H.", status: "DISTRACTED", score: 62 },
+            { name: "William M.", status: "FOCUSED", score: 88 }
+        ];
+
+        fetch('/api/user/me').then(r => r.json()).then(data => {
+            if(data.authenticated) {
+                document.getElementById('login-btn').classList.add('hidden');
+                document.getElementById('user-profile').classList.remove('hidden');
+                document.getElementById('user-name').innerText = data.user.name;
+                document.getElementById('dashboard').classList.remove('hidden');
+                
+                renderFriends();
+                startFriendSimulation();
+            }
+        });
+
+        async function toggleSession() {
+            const btn = document.getElementById('session-btn');
+            if(!sessionActive) {
+                await fetch('/session/start', {method: 'POST'});
+                sessionActive = true;
+                btn.innerText = "STOP SESSION";
+                btn.className = "bg-red-600 hover:bg-red-500 text-white font-bold py-4 rounded-xl shadow-lg transition-all w-full tracking-widest";
+                startPolling();
+            } else {
+                await fetch('/session/stop', {method: 'POST'});
+                sessionActive = false;
+                btn.innerText = "START SESSION";
+                btn.className = "bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-4 rounded-xl shadow-[0_4px_20px_rgba(16,185,129,0.3)] transition-all w-full tracking-widest border border-emerald-500/20";
+                clearInterval(statsInterval);
+            }
+        }
+
+        function startPolling() {
+            statsInterval = setInterval(async () => {
+                const res = await fetch('/stats');
+                const data = await res.json();
+                
+                document.getElementById('score').innerText = data.focus_score;
+                document.getElementById('status-text').innerText = data.status;
+                document.getElementById('score-bar').style.width = data.focus_score + "%";
+                
+                const card = document.getElementById('status-card');
+                const cam = document.getElementById('cam-container');
+                const text = document.getElementById('status-text');
+                const dot = document.getElementById('status-dot');
+                const unit = document.getElementById('score-unit');
+
+                if(data.status.includes("DISTRACTED")) {
+                    card.classList.replace('border-emerald-500', 'border-red-600');
+                    card.classList.add('border-red-600');
+                    text.className = "text-xl font-bold text-red-600 dark:text-red-500 font-mono";
+                    dot.className = "w-2 h-2 rounded-full bg-red-600 dark:bg-red-500 animate-pulse";
+                    cam.classList.add('glow-red');
+                    document.getElementById('score-bar').className = "h-full bg-red-600 dark:bg-red-500 w-full transition-all duration-500 shadow-[0_0_15px_rgba(220,38,38,0.5)]";
+                    unit.className = "text-2xl mt-4 transition-colors text-red-600 dark:text-red-500";
+                } else {
+                    card.className = "bg-white/50 dark:bg-neutral-900/50 border border-neutral-200 dark:border-neutral-800 p-6 rounded-3xl border-l-4 border-emerald-500 transition-all flex-none";
+                    text.className = "text-xl font-bold text-emerald-600 dark:text-emerald-400 font-mono";
+                    dot.className = "w-2 h-2 rounded-full bg-emerald-500 animate-pulse";
+                    cam.classList.remove('glow-red');
+                    document.getElementById('score-bar').className = "h-full bg-emerald-500 w-full transition-all duration-500 shadow-[0_0_15px_rgba(16,185,129,0.5)]";
+                    unit.className = "text-2xl mt-4 transition-colors text-emerald-600 dark:text-emerald-500";
+                }
+            }, 500);
+        }
+
+        // RENDER FRIENDS WITH PLACEHOLDER SVGs
+        function renderFriends() {
+            const list = document.getElementById('friend-list');
+            list.innerHTML = friends.map(f => {
+                const isFocused = f.status === "FOCUSED";
+                // Colors
+                const borderClass = isFocused ? "border-emerald-200 dark:border-emerald-800" : "border-red-200 dark:border-red-800";
+                const bgClass = isFocused ? "bg-emerald-100 dark:bg-emerald-900/10" : "bg-red-100 dark:bg-red-900/10";
+                const barClass = isFocused ? "bg-emerald-500" : "bg-red-500";
+                const textStatus = isFocused ? "text-emerald-500" : "text-red-500";
+                
+                return `
+                <div class="flex items-center gap-3 p-3 rounded-xl bg-white/50 dark:bg-neutral-800/40 border border-neutral-200 dark:border-neutral-700/50 transition hover:bg-neutral-100 dark:hover:bg-neutral-800">
+                    <div class="w-8 h-8 rounded-full bg-neutral-200 dark:bg-neutral-700 overflow-hidden flex items-center justify-center border-2 ${borderClass}">
+                        <svg class="w-full h-full text-neutral-400 dark:text-neutral-500 translate-y-1" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M24 20.993V24H0v-2.996A14.977 14.977 0 0112.004 15c4.904 0 9.26 2.354 11.996 5.993zM16.002 8.999a4 4 0 11-8 0 4 4 0 018 0z" />
+                        </svg>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="font-bold text-xs text-neutral-800 dark:text-neutral-200 truncate">${f.name}</span>
+                            <span class="text-[9px] font-mono ${textStatus} bg-neutral-100 dark:bg-neutral-800 px-1.5 py-0.5 rounded uppercase border border-neutral-200 dark:border-neutral-700">${f.status}</span>
+                        </div>
+                        <div class="w-full h-1 bg-neutral-200 dark:bg-neutral-700 rounded-full overflow-hidden">
+                            <div class="h-full ${barClass}" style="width: ${f.score}%"></div>
+                        </div>
+                    </div>
+                </div>
+                `;
+            }).join('');
+        }
+
+        function startFriendSimulation() {
+            friendInterval = setInterval(() => {
+                const randomIdx = Math.floor(Math.random() * friends.length);
+                const friend = friends[randomIdx];
+                if (Math.random() > 0.7) {
+                    friend.status = (friend.status === "FOCUSED") ? "DISTRACTED" : "FOCUSED";
+                    friend.score = (friend.status === "FOCUSED") ? Math.min(100, friend.score + 5) : Math.max(30, friend.score - 15);
+                    const type = friend.status === "FOCUSED" ? 'good' : 'bad';
+                    const msg = type === 'good' ? `${friend.name} is locked in.` : `${friend.name} lost focus.`;
+                    showToast(msg, type);
+                    renderFriends();
+                }
+            }, 3000);
+        }
+
+        function showToast(msg, type) {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            
+            const bg = type === 'bad' ? 'bg-red-50 dark:bg-red-900/90' : 'bg-emerald-50 dark:bg-emerald-900/90';
+            const border = type === 'bad' ? 'border-red-200 dark:border-red-800' : 'border-emerald-200 dark:border-emerald-800';
+            const text = type === 'bad' ? 'text-red-700 dark:text-red-100' : 'text-emerald-700 dark:text-emerald-100';
+            const icon = type === 'bad' ? '⚠️' : '⚡';
+
+            toast.className = `${bg} border ${border} ${text} px-4 py-3 rounded-lg shadow-lg text-sm font-bold backdrop-blur-md animate-bounce flex items-center gap-3`;
+            toast.innerHTML = `<span class="opacity-70">${icon}</span> ${msg}`;
+            
+            container.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+    </script>
+</body>
+</html>
