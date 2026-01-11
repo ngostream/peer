@@ -111,7 +111,8 @@
                 <div class="absolute top-6 right-6 z-20">
                     <button onclick="calibrate()" class="btn-glass flex items-center gap-2 px-4 py-2 rounded-xl font-medium text-sm shadow-lg group bg-white/90 dark:bg-neutral-900/90 text-neutral-900 dark:text-white border-neutral-200/50 dark:border-neutral-700/50 hover:bg-white dark:hover:bg-neutral-800 backdrop-blur-md transition-all">
                         <svg class="w-3.5 h-3.5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path> </svg>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                          </svg>
                         Set Posture
                     </button>
                 </div>
@@ -141,7 +142,7 @@
                 </button>
             </div>
 
-            <div class="bg-white/60 dark:bg-neutral-900/60 backdrop-blur-sm border border-neutral-200/50 dark:border-neutral-800/50 rounded-2xl p-6 flex flex-col transition-colors flex-[0.4] min-h-0 overflow-hidden">
+            <div id="history-panel" class="bg-white/60 dark:bg-neutral-900/60 backdrop-blur-sm border border-neutral-200/50 dark:border-neutral-800/50 rounded-2xl p-6 flex flex-col transition-all duration-300 flex-[0.4] min-h-0 overflow-hidden">
                 <div class="flex-none flex justify-between items-center mb-5">
                     <h2 class="text-neutral-500 dark:text-neutral-400 text-sm font-medium uppercase tracking-wider flex items-center gap-2">
                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
@@ -222,6 +223,8 @@
                 btn.innerText = "Start Session";
                 btn.className = "btn-glass flex-none py-3.5 rounded-xl font-semibold text-base w-full shadow-lg bg-emerald-500 dark:bg-emerald-600 text-white border-emerald-600 dark:border-emerald-500 hover:bg-emerald-600 dark:hover:bg-emerald-500 transition-all";
                 clearInterval(statsInterval);
+                // refresh history immediately after session ends
+                setTimeout(() => loadHistory(), 200);
             }
         }
 
@@ -393,18 +396,30 @@
             }).join('');
         }
 
+        let expandedSessionId = null;
+
         async function toggleSessionDetails(sessionId) {
             const eventsContainer = document.getElementById(`session-events-${sessionId}`);
+            const historyPanel = document.getElementById('history-panel');
+            const peersPanel = document.getElementById('peers-panel');
             if (!eventsContainer) return;
             
             if (eventsContainer.classList.contains('hidden')) {
+                // collapse any other expanded session
+                if (expandedSessionId && expandedSessionId !== sessionId) {
+                    const prevContainer = document.getElementById(`session-events-${expandedSessionId}`);
+                    if (prevContainer) {
+                        prevContainer.classList.add('hidden');
+                    }
+                }
+                
                 // load events for this session
                 const res = await fetch(`/api/history/${sessionId}`);
                 const data = await res.json();
                 const events = data.history || [];
                 
                 if (events.length === 0) {
-                    eventsContainer.innerHTML = '<div class="text-center text-xs text-neutral-400 dark:text-neutral-500 py-2">No distractions</div>';
+                    eventsContainer.innerHTML = '<div class="text-center text-sm text-neutral-400 dark:text-neutral-500 py-4">No distractions</div>';
                 } else {
                     eventsContainer.innerHTML = events.map(event => {
                         const date = new Date(event.timestamp * 1000);
@@ -416,28 +431,68 @@
                         const borderColor = isPhone ? "border-red-200 dark:border-red-800" : "border-orange-200 dark:border-orange-800";
                         const bgColor = isPhone ? "bg-red-50 dark:bg-red-900/20" : "bg-orange-50 dark:bg-orange-900/20";
                         
+                        const itemId = `event-${event.id || Math.random().toString(36).substr(2, 9)}`;
                         return `
-                            <div class="history-item relative group ${bgColor} ${borderColor} border rounded-lg p-2 cursor-pointer transition hover:shadow-sm" data-snapshot="${event.snapshot_url}">
+                            <div id="${itemId}" class="history-item relative ${bgColor} ${borderColor} border rounded-lg p-3 cursor-pointer transition hover:shadow-md" data-snapshot="${event.snapshot_url}">
                                 <div class="flex items-center justify-between">
                                     <div class="flex-1 min-w-0">
                                         <div class="flex items-center gap-2 mb-1">
-                                            <span class="${textColor} font-semibold text-xs">${event.reason}</span>
-                                            <span class="text-[10px] text-neutral-500 dark:text-neutral-400">${timeStr}</span>
+                                            <span class="${textColor} font-semibold text-sm">${event.reason}</span>
+                                            <span class="text-xs text-neutral-500 dark:text-neutral-400">${timeStr}</span>
                                         </div>
-                                        <div class="text-[10px] text-neutral-400 dark:text-neutral-500">Duration: ${durationStr}</div>
+                                        <div class="text-xs text-neutral-400 dark:text-neutral-500">Duration: ${durationStr}</div>
                                     </div>
                                 </div>
-                                <div class="absolute left-0 top-full mt-2 hidden group-hover:block z-50 bg-black rounded-lg p-2 shadow-2xl">
-                                    <img src="/static/${event.snapshot_url}" class="w-48 h-auto rounded" alt="Shame screenshot">
+                                <div id="tooltip-${itemId}" class="absolute left-1/2 -translate-x-1/2 top-full mt-2 opacity-0 pointer-events-none z-50 bg-black rounded-lg p-2 shadow-2xl transition-opacity duration-200">
+                                    <img src="/static/${event.snapshot_url}" class="w-64 h-auto rounded" alt="Shame screenshot" loading="lazy">
                                 </div>
                             </div>
                         `;
                     }).join('');
+                    
+                    // add hover event listeners for stable tooltips
+                    setTimeout(() => {
+                        events.forEach((event, index) => {
+                            const itemId = `event-${event.id || Math.random().toString(36).substr(2, 9)}`;
+                            const item = document.getElementById(itemId);
+                            const tooltip = document.getElementById(`tooltip-${itemId}`);
+                            if (item && tooltip) {
+                                let hoverTimeout;
+                                item.addEventListener('mouseenter', () => {
+                                    hoverTimeout = setTimeout(() => {
+                                        tooltip.classList.remove('opacity-0', 'pointer-events-none');
+                                        tooltip.classList.add('opacity-100');
+                                    }, 200);
+                                });
+                                item.addEventListener('mouseleave', () => {
+                                    clearTimeout(hoverTimeout);
+                                    tooltip.classList.add('opacity-0', 'pointer-events-none');
+                                    tooltip.classList.remove('opacity-100');
+                                });
+                            }
+                        });
+                    }, 50);
                 }
                 
                 eventsContainer.classList.remove('hidden');
+                expandedSessionId = sessionId;
+                
+                // expand history panel, shrink peers panel
+                historyPanel.classList.remove('flex-[0.4]');
+                historyPanel.classList.add('flex-[0.85]');
+                peersPanel.classList.remove('flex-[0.6]');
+                peersPanel.classList.add('flex-[0.15]');
+                peersPanel.classList.add('opacity-50');
             } else {
                 eventsContainer.classList.add('hidden');
+                expandedSessionId = null;
+                
+                // restore original sizes
+                historyPanel.classList.remove('flex-[0.85]');
+                historyPanel.classList.add('flex-[0.4]');
+                peersPanel.classList.remove('flex-[0.15]');
+                peersPanel.classList.add('flex-[0.6]');
+                peersPanel.classList.remove('opacity-50');
             }
         }
 
