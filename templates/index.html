@@ -478,6 +478,9 @@
                 const focusPercentage = session.duration > 0 ? 
                     Math.round(((session.duration - session.total_distraction_time) / session.duration) * 100) : 100;
                 
+                // generate sparkline svg
+                const sparklineSvg = generateSparkline(session.score_history || [], focusPercentage);
+                
                 return `
                     <div class="session-summary bg-neutral-50 dark:bg-neutral-800/40 border border-neutral-200/50 dark:border-neutral-700/50 rounded-xl transition" data-session-id="${session.id}">
                         <div class="p-4 cursor-pointer hover:bg-neutral-100/50 dark:hover:bg-neutral-800/60 transition" onclick="toggleSessionDetails('${session.id}')">
@@ -489,9 +492,14 @@
                                     </div>
                                     <div class="text-xs text-neutral-400 dark:text-neutral-500">${durationStr} session</div>
                                 </div>
-                                <div class="text-right">
-                                    <div class="text-sm font-semibold text-emerald-600 dark:text-emerald-400">${focusPercentage}%</div>
-                                    <div class="text-xs text-neutral-400 dark:text-neutral-500">focus</div>
+                                <div class="flex items-center gap-3">
+                                    <div class="w-24 h-8 flex items-center justify-center">
+                                        ${sparklineSvg}
+                                    </div>
+                                    <div class="text-right">
+                                        <div class="text-sm font-semibold text-emerald-600 dark:text-emerald-400">${focusPercentage}%</div>
+                                        <div class="text-xs text-neutral-400 dark:text-neutral-500">focus</div>
+                                    </div>
                                 </div>
                             </div>
                             <div class="flex items-center gap-4 text-xs text-neutral-500 dark:text-neutral-400">
@@ -640,6 +648,56 @@
         function sendInvite() {
             closeInviteModal();
             showToast("Invite sent successfully!", "good");
+        }
+
+        function generateSparkline(scoreHistory, avgScore) {
+            if (!scoreHistory || scoreHistory.length === 0) {
+                // return empty sparkline if no data
+                return `<svg width="96" height="32" class="opacity-50"><line x1="0" y1="16" x2="96" y2="16" stroke="currentColor" stroke-width="1" class="text-neutral-300 dark:text-neutral-600"/></svg>`;
+            }
+            
+            const width = 96;
+            const height = 32;
+            const padding = 2;
+            const innerWidth = width - padding * 2;
+            const innerHeight = height - padding * 2;
+            
+            // normalize scores to fit in inner height (0-100 -> 0-innerHeight)
+            const minScore = Math.min(...scoreHistory.map(s => s.score), 0);
+            const maxScore = Math.max(...scoreHistory.map(s => s.score), 100);
+            const scoreRange = maxScore - minScore || 1;
+            
+            // generate path
+            const points = scoreHistory.map((point, i) => {
+                const x = padding + (i / (scoreHistory.length - 1 || 1)) * innerWidth;
+                const normalizedScore = (point.score - minScore) / scoreRange;
+                const y = padding + innerHeight - (normalizedScore * innerHeight);
+                return `${i === 0 ? 'M' : 'L'} ${x} ${y}`;
+            }).join(' ');
+            
+            // determine color based on average score
+            const color = avgScore >= 80 ? 'rgb(16, 185, 129)' : avgScore >= 60 ? 'rgb(251, 146, 60)' : 'rgb(239, 68, 68)';
+            
+            return `
+                <svg width="${width}" height="${height}" class="overflow-visible">
+                    <path d="${points}" 
+                          fill="none" 
+                          stroke="${color}" 
+                          stroke-width="2" 
+                          stroke-linecap="round" 
+                          stroke-linejoin="round"
+                          opacity="0.8"/>
+                    <defs>
+                        <linearGradient id="sparkline-gradient-${Math.random().toString(36).substr(2, 9)}" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" style="stop-color:${color};stop-opacity:0.3" />
+                            <stop offset="100%" style="stop-color:${color};stop-opacity:0" />
+                        </linearGradient>
+                    </defs>
+                    <path d="${points} L ${padding + innerWidth} ${padding + innerHeight} L ${padding} ${padding + innerHeight} Z" 
+                          fill="url(#sparkline-gradient-${Math.random().toString(36).substr(2, 9)})" 
+                          opacity="0.2"/>
+                </svg>
+            `;
         }
     </script>
 </body>

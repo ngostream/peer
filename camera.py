@@ -49,6 +49,10 @@ class VideoCamera:
         # current session tracking
         self.current_session_start = None
         self.current_session_history_index = None
+        self.current_session_scores = []  # track focus scores over time for sparkline
+        self.last_score_record_time = None
+        self.current_session_scores = []  # track focus scores over time for sparkline
+        self.last_score_record_time = None
 
     def calibrate(self):
         # trigger flag to capture posture on next frame
@@ -272,6 +276,16 @@ class VideoCamera:
         else:
             self.status = "FOCUSED"
             self.focus_score = min(100, self.focus_score + 0.1)
+        
+        # record score for sparkline (every 2 seconds during active session)
+        if self.current_session_start is not None:
+            current_time = time.time()
+            if self.last_score_record_time is None or (current_time - self.last_score_record_time) >= 2.0:
+                self.current_session_scores.append({
+                    "time": current_time - self.current_session_start,
+                    "score": int(self.focus_score)
+                })
+                self.last_score_record_time = current_time
             
             # update hud based on context
             status_text = "STUDY MODE" if has_study_material else "VISION ACTIVE"
@@ -287,6 +301,10 @@ class VideoCamera:
         # start a new session
         self.current_session_start = time.time()
         self.current_session_history_index = len(self.history)
+        self.current_session_scores = []
+        self.last_score_record_time = None
+        self.current_session_scores = []
+        self.last_score_record_time = None
         
     def stop_session(self):
         # end current session and create summary
@@ -311,12 +329,15 @@ class VideoCamera:
             "duration": session_duration,
             "distraction_count": distraction_count,
             "total_distraction_time": total_distraction_time,
-            "avg_focus_score": avg_focus_score
+            "avg_focus_score": avg_focus_score,
+            "score_history": self.current_session_scores  # for sparkline visualization
         }
         
         self.sessions.append(session_summary)
         self.current_session_start = None
         self.current_session_history_index = None
+        self.current_session_scores = []
+        self.last_score_record_time = None
         
         return session_summary
     
