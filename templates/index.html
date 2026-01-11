@@ -239,48 +239,86 @@
         // RENDER FRIENDS WITH PLACEHOLDER SVGs
         function renderFriends() {
             const list = document.getElementById('friend-list');
-            list.innerHTML = friends.map(f => {
-                const isFocused = f.status === "FOCUSED";
-                // Colors
-                const borderClass = isFocused ? "border-emerald-200 dark:border-emerald-800" : "border-red-200 dark:border-red-800";
-                const bgClass = isFocused ? "bg-emerald-100 dark:bg-emerald-900/10" : "bg-red-100 dark:bg-red-900/10";
-                const barClass = isFocused ? "bg-emerald-500" : "bg-red-500";
-                const textStatus = isFocused ? "text-emerald-500" : "text-red-500";
-                
-                return `
-                <div class="flex items-center gap-3 p-3 rounded-xl bg-white/50 dark:bg-neutral-800/40 border border-neutral-200 dark:border-neutral-700/50 transition hover:bg-neutral-100 dark:hover:bg-neutral-800">
-                    <div class="w-8 h-8 rounded-full bg-neutral-200 dark:bg-neutral-700 overflow-hidden flex items-center justify-center border-2 ${borderClass}">
-                        <svg class="w-full h-full text-neutral-400 dark:text-neutral-500 translate-y-1" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M24 20.993V24H0v-2.996A14.977 14.977 0 0112.004 15c4.904 0 9.26 2.354 11.996 5.993zM16.002 8.999a4 4 0 11-8 0 4 4 0 018 0z" />
-                        </svg>
-                    </div>
-                    <div class="flex-1 min-w-0">
-                        <div class="flex justify-between items-center mb-1">
-                            <span class="font-bold text-xs text-neutral-800 dark:text-neutral-200 truncate">${f.name}</span>
-                            <span class="text-[9px] font-mono ${textStatus} bg-neutral-100 dark:bg-neutral-800 px-1.5 py-0.5 rounded uppercase border border-neutral-200 dark:border-neutral-700">${f.status}</span>
+            if (!list.hasChildNodes() || list.children.length === 0) {
+                // initial render
+                list.innerHTML = friends.map((f, idx) => {
+                    const isFocused = f.status === "FOCUSED";
+                    const borderClass = isFocused ? "border-emerald-200 dark:border-emerald-800" : "border-red-200 dark:border-red-800";
+                    const bgClass = isFocused ? "bg-emerald-100 dark:bg-emerald-900/10" : "bg-red-100 dark:bg-red-900/10";
+                    const barClass = isFocused ? "bg-emerald-500" : "bg-red-500";
+                    const textStatus = isFocused ? "text-emerald-500" : "text-red-500";
+                    
+                    return `
+                    <div class="friend-item flex items-center gap-3 p-3 rounded-xl bg-white/50 dark:bg-neutral-800/40 border border-neutral-200 dark:border-neutral-700/50 transition hover:bg-neutral-100 dark:hover:bg-neutral-800" data-index="${idx}">
+                        <div class="w-8 h-8 rounded-full bg-neutral-200 dark:bg-neutral-700 overflow-hidden flex items-center justify-center border-2 ${borderClass}">
+                            <svg class="w-full h-full text-neutral-400 dark:text-neutral-500 translate-y-1" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M24 20.993V24H0v-2.996A14.977 14.977 0 0112.004 15c4.904 0 9.26 2.354 11.996 5.993zM16.002 8.999a4 4 0 11-8 0 4 4 0 018 0z" />
+                            </svg>
                         </div>
-                        <div class="w-full h-1 bg-neutral-200 dark:bg-neutral-700 rounded-full overflow-hidden">
-                            <div class="h-full ${barClass}" style="width: ${f.score}%"></div>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex justify-between items-center mb-1">
+                                <span class="friend-name font-bold text-xs text-neutral-800 dark:text-neutral-200 truncate">${f.name}</span>
+                                <span class="friend-status text-[9px] font-mono ${textStatus} bg-neutral-100 dark:bg-neutral-800 px-1.5 py-0.5 rounded uppercase border border-neutral-200 dark:border-neutral-700">${f.status}</span>
+                            </div>
+                            <div class="w-full h-1 bg-neutral-200 dark:bg-neutral-700 rounded-full overflow-hidden">
+                                <div class="friend-bar h-full ${barClass} transition-all duration-300" style="width: ${f.score}%"></div>
+                            </div>
                         </div>
                     </div>
-                </div>
-                `;
-            }).join('');
+                    `;
+                }).join('');
+            } else {
+                // update existing elements
+                friends.forEach((f, idx) => {
+                    const item = list.querySelector(`.friend-item[data-index="${idx}"]`);
+                    if (!item) return;
+                    
+                    const isFocused = f.status === "FOCUSED";
+                    const bar = item.querySelector('.friend-bar');
+                    const statusBadge = item.querySelector('.friend-status');
+                    
+                    if (bar) {
+                        bar.style.width = f.score + '%';
+                        if (isFocused) {
+                            bar.className = 'friend-bar h-full bg-emerald-500 transition-all duration-300';
+                        } else {
+                            bar.className = 'friend-bar h-full bg-red-500 transition-all duration-300';
+                        }
+                    }
+                    
+                    if (statusBadge) {
+                        statusBadge.textContent = f.status;
+                        statusBadge.className = `friend-status text-[9px] font-mono ${isFocused ? 'text-emerald-500' : 'text-red-500'} bg-neutral-100 dark:bg-neutral-800 px-1.5 py-0.5 rounded uppercase border border-neutral-200 dark:border-neutral-700`;
+                    }
+                });
+            }
         }
 
         function startFriendSimulation() {
             friendInterval = setInterval(() => {
-                const randomIdx = Math.floor(Math.random() * friends.length);
-                const friend = friends[randomIdx];
-                if (Math.random() > 0.7) {
-                    friend.status = (friend.status === "FOCUSED") ? "DISTRACTED" : "FOCUSED";
-                    friend.score = (friend.status === "FOCUSED") ? Math.min(100, friend.score + 5) : Math.max(30, friend.score - 15);
-                    const type = friend.status === "FOCUSED" ? 'good' : 'bad';
-                    const msg = type === 'good' ? `${friend.name} is locked in.` : `${friend.name} lost focus.`;
-                    showToast(msg, type);
-                    renderFriends();
-                }
-            }, 3000);
+                friends.forEach(friend => {
+                    // gradually change scores based on status
+                    if (friend.status === "FOCUSED") {
+                        friend.score = Math.min(100, friend.score + 0.3 + Math.random() * 0.4);
+                    } else {
+                        friend.score = Math.max(30, friend.score - 0.5 - Math.random() * 0.5);
+                    }
+                    friend.score = Math.round(friend.score * 10) / 10;
+                    
+                    // occasionally change status
+                    if (Math.random() > 0.98) {
+                        friend.status = (friend.status === "FOCUSED") ? "DISTRACTED" : "FOCUSED";
+                        
+                        // show toast when status changes
+                        const type = friend.status === "FOCUSED" ? 'good' : 'bad';
+                        const msg = type === 'good' ? `${friend.name} is locked in.` : `${friend.name} lost focus.`;
+                        showToast(msg, type);
+                        // re-render on status change to update colors
+                        renderFriends();
+                    }
+                });
+                renderFriends();
+            }, 500);
         }
 
         function showToast(msg, type) {
