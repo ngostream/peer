@@ -14,7 +14,6 @@ MOCK_USER = {
     "user_id": "gaucho_001",
     "name": "Nathan Ngo",
     "email": "nathan_ngo@ucsb.edu",
-    "picture": "https://api.dicebear.com/7.x/avataaars/svg?seed=Felix"
 }
 
 async def get_current_user(request: Request):
