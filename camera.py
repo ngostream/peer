@@ -6,6 +6,7 @@ import numpy as np
 import os
 import urllib.request
 import time
+import uuid
 
 class VideoCamera:
     def __init__(self):
@@ -35,6 +36,18 @@ class VideoCamera:
         # user can override this by clicking calibrate in the ui
         self.baseline_dist = 0.22
         self.is_calibrating = False
+        
+        # session history tracking
+        self.history = []
+        self.sessions = []
+        self.is_currently_distracted = False
+        self.distraction_start_time = None
+        self.distraction_reason = ""
+        self.distraction_snapshot_filename = None
+        
+        # current session tracking
+        self.current_session_start = None
+        self.current_session_history_index = None
 
     def calibrate(self):
         # trigger flag to capture posture on next frame
@@ -201,6 +214,37 @@ class VideoCamera:
             # reset the counter to zero immediately when distraction is gone
             self.distracted_frames = 0
 
+        # state transition detection for history
+        if not self.is_currently_distracted and self.distracted_frames > self.DISTRACTION_THRESHOLD:
+            # distraction starts
+            self.is_currently_distracted = True
+            self.distraction_start_time = time.time()
+            self.distraction_reason = reason
+            
+            # capture screenshot
+            snapshot_filename = f"shame/{uuid.uuid4()}.jpg"
+            snapshot_path = os.path.join(os.path.dirname(__file__), 'static', snapshot_filename)
+            cv2.imwrite(snapshot_path, frame, [cv2.IMWRITE_JPEG_QUALITY, 85])
+            self.distraction_snapshot_filename = snapshot_filename
+            print(f"distraction started: {reason}, snapshot: {snapshot_filename}")
+
+        elif self.is_currently_distracted and self.distracted_frames <= self.DISTRACTION_THRESHOLD:
+            # distraction ends
+            self.is_currently_distracted = False
+            if self.distraction_start_time:
+                duration = time.time() - self.distraction_start_time
+                self.history.append({
+                    "id": str(uuid.uuid4()),
+                    "timestamp": int(self.distraction_start_time),
+                    "reason": self.distraction_reason,
+                    "duration": duration,
+                    "snapshot_url": self.distraction_snapshot_filename
+                })
+                print(f"distraction ended: {self.distraction_reason}, duration: {duration:.2f}s")
+            self.distraction_start_time = None
+            self.distraction_reason = ""
+            self.distraction_snapshot_filename = None
+
         # hysteresis buffer to prevent flickering
         if self.distracted_frames > self.DISTRACTION_THRESHOLD:
             self.status = "DISTRACTED" 
@@ -220,6 +264,51 @@ class VideoCamera:
 
         ret, buffer = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 85])
         return buffer.tobytes(), self.status, int(self.focus_score)
+
+    def start_session(self):
+        # start a new session
+        self.current_session_start = time.time()
+        self.current_session_history_index = len(self.history)
+        
+    def stop_session(self):
+        # end current session and create summary
+        if self.current_session_start is None:
+            return
+            
+        session_end = time.time()
+        session_duration = session_end - self.current_session_start
+        
+        # get all events for this session
+        session_events = self.history[self.current_session_history_index:] if self.current_session_history_index is not None else self.history
+        
+        # calculate stats
+        distraction_count = len(session_events)
+        total_distraction_time = sum(event.get("duration", 0) for event in session_events)
+        avg_focus_score = 100  # placeholder - we don't track average score yet
+        
+        session_summary = {
+            "id": str(uuid.uuid4()),
+            "start_time": int(self.current_session_start),
+            "end_time": int(session_end),
+            "duration": session_duration,
+            "distraction_count": distraction_count,
+            "total_distraction_time": total_distraction_time,
+            "avg_focus_score": avg_focus_score
+        }
+        
+        self.sessions.append(session_summary)
+        self.current_session_start = None
+        self.current_session_history_index = None
+        
+        return session_summary
+    
+    def get_history(self):
+        # return history list (most recent first)
+        return list(reversed(self.history))
+    
+    def get_sessions(self):
+        # return session summaries (most recent first)
+        return list(reversed(self.sessions))
 
     def release(self):
         self.camera.release()

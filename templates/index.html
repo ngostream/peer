@@ -111,7 +111,7 @@
                 <div class="absolute top-6 right-6 z-20">
                     <button onclick="calibrate()" class="btn-glass flex items-center gap-2 px-4 py-2 rounded-xl font-medium text-sm shadow-lg group bg-white/90 dark:bg-neutral-900/90 text-neutral-900 dark:text-white border-neutral-200/50 dark:border-neutral-700/50 hover:bg-white dark:hover:bg-neutral-800 backdrop-blur-md transition-all">
                         <svg class="w-3.5 h-3.5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" display="none"></path> <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M22 12h-4l-3 9L9 3l-3 9H2"></path> </svg>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path> </svg>
                         Set Posture
                     </button>
                 </div>
@@ -148,7 +148,7 @@
                         Session History
                     </h2>
                 </div>
-                <div class="flex-1 flex items-center justify-center">
+                <div id="history-list" class="flex-1 overflow-y-auto pr-2 space-y-2">
                     <div class="text-center text-sm text-neutral-400 dark:text-neutral-500 py-4">No recent sessions</div>
                 </div>
             </div>
@@ -194,6 +194,7 @@
                 
                 renderFriends();
                 startFriendSimulation();
+                loadHistory();
             }
         });
 
@@ -214,6 +215,7 @@
                 btn.innerText = "Stop Session";
                 btn.className = "btn-glass flex-none py-3.5 rounded-xl font-semibold text-base w-full shadow-lg bg-red-500 dark:bg-red-600 text-white border-red-600 dark:border-red-500 hover:bg-red-600 dark:hover:bg-red-500 transition-all";
                 startPolling();
+                loadHistory();
             } else {
                 await fetch('/session/stop', {method: 'POST'});
                 sessionActive = false;
@@ -229,7 +231,7 @@
                 const data = await res.json();
                 
                 document.getElementById('score').innerText = data.focus_score;
-                const statusPretty = data.status === "DISTRACTED" ? "Distraction Detected" : "Vision Active";
+                const statusPretty = data.status === "DISTRACTED" ? "Distraction Detected" : "Focused";
                 document.getElementById('status-text').innerText = statusPretty;
                 document.getElementById('score-bar').style.width = data.focus_score + "%";
                 
@@ -255,6 +257,9 @@
                     document.getElementById('score-bar').className = "h-full bg-emerald-500 w-full transition-all duration-500 shadow-[0_0_15px_rgba(16,185,129,0.5)]";
                     unit.className = "text-2xl mt-4 transition-colors text-emerald-600 dark:text-emerald-500";
                 }
+                
+                // refresh history when status changes
+                loadHistory();
             }, 500);
         }
 
@@ -329,6 +334,111 @@
                 });
                 renderFriends();
             }, 500);
+        }
+
+        async function loadHistory() {
+            const sessionsRes = await fetch('/api/sessions');
+            const sessionsData = await sessionsRes.json();
+            const sessions = sessionsData.sessions || [];
+            
+            const list = document.getElementById('history-list');
+            if (sessions.length === 0) {
+                list.innerHTML = '<div class="text-center text-sm text-neutral-400 dark:text-neutral-500 py-4">No recent sessions</div>';
+                return;
+            }
+            
+            list.innerHTML = sessions.map(session => {
+                const startDate = new Date(session.start_time * 1000);
+                const dateStr = startDate.toLocaleDateString([], {month: 'short', day: 'numeric'});
+                const timeStr = startDate.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
+                
+                const durationStr = session.duration < 60 ? `${Math.round(session.duration)}s` : 
+                                   session.duration < 3600 ? `${Math.round(session.duration / 60)}m` :
+                                   `${Math.round(session.duration / 3600)}h ${Math.round((session.duration % 3600) / 60)}m`;
+                
+                const distractionTimeStr = session.total_distraction_time < 60 ? `${Math.round(session.total_distraction_time)}s` :
+                                          `${Math.round(session.total_distraction_time / 60)}m`;
+                
+                const focusPercentage = session.duration > 0 ? 
+                    Math.round(((session.duration - session.total_distraction_time) / session.duration) * 100) : 100;
+                
+                return `
+                    <div class="session-summary bg-neutral-50 dark:bg-neutral-800/40 border border-neutral-200/50 dark:border-neutral-700/50 rounded-xl transition" data-session-id="${session.id}">
+                        <div class="p-4 cursor-pointer hover:bg-neutral-100/50 dark:hover:bg-neutral-800/60 transition" onclick="toggleSessionDetails('${session.id}')">
+                            <div class="flex items-start justify-between mb-3">
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-center gap-2 mb-1">
+                                        <span class="text-sm font-semibold text-neutral-900 dark:text-neutral-100">${dateStr}</span>
+                                        <span class="text-xs text-neutral-500 dark:text-neutral-400">${timeStr}</span>
+                                    </div>
+                                    <div class="text-xs text-neutral-400 dark:text-neutral-500">${durationStr} session</div>
+                                </div>
+                                <div class="text-right">
+                                    <div class="text-sm font-semibold text-emerald-600 dark:text-emerald-400">${focusPercentage}%</div>
+                                    <div class="text-xs text-neutral-400 dark:text-neutral-500">focus</div>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-4 text-xs text-neutral-500 dark:text-neutral-400">
+                                <div>
+                                    <span class="font-medium text-neutral-700 dark:text-neutral-300">${session.distraction_count}</span> distractions
+                                </div>
+                                <div>
+                                    <span class="font-medium text-neutral-700 dark:text-neutral-300">${distractionTimeStr}</span> distracted
+                                </div>
+                            </div>
+                        </div>
+                        <div id="session-events-${session.id}" class="session-events hidden border-t border-neutral-200/50 dark:border-neutral-700/50 p-3 space-y-2"></div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function toggleSessionDetails(sessionId) {
+            const eventsContainer = document.getElementById(`session-events-${sessionId}`);
+            if (!eventsContainer) return;
+            
+            if (eventsContainer.classList.contains('hidden')) {
+                // load events for this session
+                const res = await fetch(`/api/history/${sessionId}`);
+                const data = await res.json();
+                const events = data.history || [];
+                
+                if (events.length === 0) {
+                    eventsContainer.innerHTML = '<div class="text-center text-xs text-neutral-400 dark:text-neutral-500 py-2">No distractions</div>';
+                } else {
+                    eventsContainer.innerHTML = events.map(event => {
+                        const date = new Date(event.timestamp * 1000);
+                        const timeStr = date.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
+                        const durationStr = event.duration < 60 ? `${Math.round(event.duration)}s` : `${Math.round(event.duration / 60)}m ${Math.round(event.duration % 60)}s`;
+                        
+                        const isPhone = event.reason === "PHONE";
+                        const textColor = isPhone ? "text-red-600 dark:text-red-400" : "text-orange-600 dark:text-orange-400";
+                        const borderColor = isPhone ? "border-red-200 dark:border-red-800" : "border-orange-200 dark:border-orange-800";
+                        const bgColor = isPhone ? "bg-red-50 dark:bg-red-900/20" : "bg-orange-50 dark:bg-orange-900/20";
+                        
+                        return `
+                            <div class="history-item relative group ${bgColor} ${borderColor} border rounded-lg p-2 cursor-pointer transition hover:shadow-sm" data-snapshot="${event.snapshot_url}">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex-1 min-w-0">
+                                        <div class="flex items-center gap-2 mb-1">
+                                            <span class="${textColor} font-semibold text-xs">${event.reason}</span>
+                                            <span class="text-[10px] text-neutral-500 dark:text-neutral-400">${timeStr}</span>
+                                        </div>
+                                        <div class="text-[10px] text-neutral-400 dark:text-neutral-500">Duration: ${durationStr}</div>
+                                    </div>
+                                </div>
+                                <div class="absolute left-0 top-full mt-2 hidden group-hover:block z-50 bg-black rounded-lg p-2 shadow-2xl">
+                                    <img src="/static/${event.snapshot_url}" class="w-48 h-auto rounded" alt="Shame screenshot">
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                }
+                
+                eventsContainer.classList.remove('hidden');
+            } else {
+                eventsContainer.classList.add('hidden');
+            }
         }
 
         function showToast(msg, type) {
