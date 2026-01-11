@@ -91,7 +91,7 @@ class VideoCamera:
         self.detector = vision.ObjectDetector.create_from_options(
             vision.ObjectDetectorOptions(
                 base_options=python.BaseOptions(model_asset_path=det_path),
-                score_threshold=0.25, # lower threshold to catch phones more reliably
+                score_threshold=0.4, # lower threshold to catch phones more reliably
                 category_allowlist=["cell phone", "mobile phone", "book", "laptop"] # ignore cups, etc.
             )
         )
