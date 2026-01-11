@@ -94,18 +94,71 @@
                     Login with Google
                 </button>
                 
-                <div id="user-profile" class="hidden flex items-center gap-3 bg-neutral-100/80 dark:bg-neutral-800/60 pr-4 pl-2.5 py-2 rounded-xl border border-neutral-200/50 dark:border-neutral-700/50 backdrop-blur-sm">
-                    <div class="w-9 h-9 rounded-lg bg-neutral-200 dark:bg-neutral-700 overflow-hidden flex items-center justify-center">
-                        <svg class="w-full h-full text-neutral-400 dark:text-neutral-500 translate-y-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M24 20.993V24H0v-2.996A14.977 14.977 0 0112.004 15c4.904 0 9.26 2.354 11.996 5.993zM16.002 8.999a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
-                    </div>
-                    <div class="text-right">
-                        <div id="user-name" class="font-semibold text-sm text-neutral-900 dark:text-white leading-tight"></div>
-                        <div class="text-sm text-emerald-600 dark:text-emerald-400 font-medium mt-0.5">Online</div>
+                <div id="user-profile" class="hidden relative">
+                    <button onclick="toggleUserMenu()" class="flex items-center gap-3 bg-neutral-100/80 dark:bg-neutral-800/60 pr-4 pl-2.5 py-2 rounded-xl border border-neutral-200/50 dark:border-neutral-700/50 backdrop-blur-sm hover:bg-neutral-200/80 dark:hover:bg-neutral-700/60 transition-all">
+                        <div class="w-9 h-9 rounded-lg bg-neutral-200 dark:bg-neutral-700 overflow-hidden flex items-center justify-center">
+                            <svg class="w-full h-full text-neutral-400 dark:text-neutral-500 translate-y-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M24 20.993V24H0v-2.996A14.977 14.977 0 0112.004 15c4.904 0 9.26 2.354 11.996 5.993zM16.002 8.999a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+                        </div>
+                        <div class="text-right">
+                            <div id="user-name" class="font-semibold text-sm text-neutral-900 dark:text-white leading-tight"></div>
+                            <div class="text-sm text-emerald-600 dark:text-emerald-400 font-medium mt-0.5">Online</div>
+                        </div>
+                        <svg class="w-4 h-4 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </button>
+                    <div id="user-menu" class="hidden absolute right-0 top-full mt-2 w-48 bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200/50 dark:border-neutral-800/50 shadow-2xl overflow-hidden z-50">
+                        <a href="/auth/logout" class="block px-4 py-3 text-sm font-medium text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors">
+                            Logout
+                        </a>
                     </div>
                 </div>
             </div>
         </div>
     </nav>
+
+    <!-- Hero Section (shown when not logged in) -->
+    <div id="hero-section" class="flex-1 flex flex-col items-center justify-center max-w-4xl mx-auto text-center px-4">
+        <div class="mb-8">
+            <h1 class="text-5xl font-bold text-neutral-900 dark:text-white mb-4 tracking-tight">Stay Focused, Stay Accountable</h1>
+            <p class="text-xl text-neutral-600 dark:text-neutral-400 mb-8">Real-time focus monitoring that keeps you on track during work sessions</p>
+            <button onclick="window.location.href='/auth/login'" class="btn-glass px-8 py-4 rounded-xl font-semibold text-base bg-emerald-500 dark:bg-emerald-600 text-white border-emerald-600 dark:border-emerald-500 hover:bg-emerald-600 dark:hover:bg-emerald-500 shadow-lg transition-all">
+                Get Started
+            </button>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 w-full mt-12">
+            <div class="bg-white/60 dark:bg-neutral-900/60 backdrop-blur-sm border border-neutral-200/50 dark:border-neutral-800/50 rounded-2xl p-6">
+                <div class="w-12 h-12 bg-emerald-100 dark:bg-emerald-900/30 rounded-xl flex items-center justify-center mb-4 mx-auto">
+                    <svg class="w-6 h-6 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+                <h3 class="font-semibold text-neutral-900 dark:text-white mb-2">Real-Time Monitoring</h3>
+                <p class="text-sm text-neutral-600 dark:text-neutral-400">Track your posture and attention with AI-powered computer vision</p>
+            </div>
+            
+            <div class="bg-white/60 dark:bg-neutral-900/60 backdrop-blur-sm border border-neutral-200/50 dark:border-neutral-800/50 rounded-2xl p-6">
+                <div class="w-12 h-12 bg-emerald-100 dark:bg-emerald-900/30 rounded-xl flex items-center justify-center mb-4 mx-auto">
+                    <svg class="w-6 h-6 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                    </svg>
+                </div>
+                <h3 class="font-semibold text-neutral-900 dark:text-white mb-2">Peer Accountability</h3>
+                <p class="text-sm text-neutral-600 dark:text-neutral-400">Stay motivated with friends and compare focus scores together</p>
+            </div>
+            
+            <div class="bg-white/60 dark:bg-neutral-900/60 backdrop-blur-sm border border-neutral-200/50 dark:border-neutral-800/50 rounded-2xl p-6">
+                <div class="w-12 h-12 bg-emerald-100 dark:bg-emerald-900/30 rounded-xl flex items-center justify-center mb-4 mx-auto">
+                    <svg class="w-6 h-6 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                    </svg>
+                </div>
+                <h3 class="font-semibold text-neutral-900 dark:text-white mb-2">Session History</h3>
+                <p class="text-sm text-neutral-600 dark:text-neutral-400">Review your sessions and track your progress over time</p>
+            </div>
+        </div>
+    </div>
 
     <div id="dashboard" class="hidden flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-12 gap-6">
         
@@ -201,6 +254,20 @@
                 localStorage.setItem('theme', 'dark');
             }
         }
+
+        function toggleUserMenu() {
+            const menu = document.getElementById('user-menu');
+            menu.classList.toggle('hidden');
+        }
+
+        // close user menu when clicking outside
+        document.addEventListener('click', (e) => {
+            const userProfile = document.getElementById('user-profile');
+            const userMenu = document.getElementById('user-menu');
+            if (userProfile && userMenu && !userProfile.contains(e.target)) {
+                userMenu.classList.add('hidden');
+            }
+        });
         if (localStorage.getItem('theme') === 'light') {
             document.documentElement.classList.remove('dark');
         } else {
@@ -222,12 +289,15 @@
             if(data.authenticated) {
                 document.getElementById('login-btn').classList.add('hidden');
                 document.getElementById('user-profile').classList.remove('hidden');
+                document.getElementById('hero-section').classList.add('hidden');
                 document.getElementById('user-name').innerText = data.user.name;
                 document.getElementById('dashboard').classList.remove('hidden');
                 
                 renderFriends();
                 startFriendSimulation();
                 loadHistory();
+            } else {
+                document.getElementById('hero-section').classList.remove('hidden');
             }
         });
 
