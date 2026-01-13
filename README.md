@@ -2,6 +2,20 @@
 
 Real-time focus monitoring that tracks your posture and attention during work sessions. Uses computer vision to detect distractions and keeps you accountable with a clean dashboard.
 
+## Screenshots
+
+### Login Page
+![Dashboard](screenshots/login.png)
+
+### Invite Your Friends
+![Active Session](screenshots/invite.png)
+
+### Dashboard
+![Session History](screenshots/dashboard.png)
+
+### Session Details
+![Session Details](screenshots/session-details.png)
+
 ## Features
 
 - Real-time focus score tracking
@@ -73,6 +87,7 @@ peer/
 │   └── index.html      # Frontend dashboard
 ├── static/
 │   └── shame/          # Distraction screenshots (gitignored)
+├── screenshots/         # App screenshots for documentation
 ├── models/              # MediaPipe model files (gitignored)
 ├── requirements.txt     # Python dependencies
 └── README.md           # This file
